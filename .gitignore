@@ -1,0 +1,19 @@
+# Compiled Python files
+*.pyc
+
+# Configuration files
+*.env
+
+/vendor
+/node_modules
+Homestead.yaml
+Homestead.json
+
+# Elastic Beanstalk Files
+
+.elasticbeanstalk/*
+
+!.elasticbeanstalk/*.cfg.yml
+
+!.elasticbeanstalk/*.global.yml
+
