@@ -33,7 +33,12 @@ class DBManager(object):
 
     def __open(self):
         try:
-            cnx = MySQLdb.connect(self.__host, self.__user, self.__password, self.__database)
+            cnx = MySQLdb.connect(self.__host,
+                                  self.__user,
+                                  self.__password,
+                                  self.__database,
+                                  charset='utf8',
+                                  use_unicode=True)
             self.__connection = cnx
             self.__session    = cnx.cursor()
         except MySQLdb.Error as e:
@@ -45,12 +50,27 @@ class DBManager(object):
         self.__connection.close()
     ## End def __close
 
-    def select(self):
+    def select(self, table, where=None, *args, **kwargs):
         result = None
-        query = 'Select * from Sources;'
+        query = 'SELECT '
+        keys = args
+        values = tuple(kwargs.values())
+        l = len(keys) - 1
+
+        for i, key in enumerate(keys):
+            query += "`"+key+"`"
+            if i < l:
+                query += ","
+        ## End for keys
+
+        query += 'FROM %s' % table
+
+        if where:
+            query += " WHERE %s" % where
+        ## End if where
 
         self.__open()
-        self.__session.execute(query)
+        self.__session.execute(query, values)
         number_rows = self.__session.rowcount
         number_columns = len(self.__session.description)
 
@@ -61,38 +81,6 @@ class DBManager(object):
         self.__close()
 
         return result
-
-    # def select(self, table, where=None, *args, **kwargs):
-    #     result = None
-    #     query = 'SELECT '
-    #     keys = args
-    #     values = tuple(kwargs.values())
-    #     l = len(keys) - 1
-    #
-    #     for i, key in enumerate(keys):
-    #         query += "`"+key+"`"
-    #         if i < l:
-    #             query += ","
-    #     ## End for keys
-    #
-    #     query += 'FROM %s' % table
-    #
-    #     if where:
-    #         query += " WHERE %s" % where
-    #     ## End if where
-    #
-    #     self.__open()
-    #     self.__session.execute(query, values)
-    #     number_rows = self.__session.rowcount
-    #     number_columns = len(self.__session.description)
-    #
-    #     if number_rows >= 1 and number_columns > 1:
-    #         result = [item for item in self.__session.fetchall()]
-    #     else:
-    #         result = [item[0] for item in self.__session.fetchall()]
-    #     self.__close()
-    #
-    #     return result
     ## End def select
 
     def update(self, table, where=None, *args, **kwargs):
@@ -157,8 +145,9 @@ class DBManager(object):
 
     def select_advanced(self, sql, *args):
         od = OrderedDict(args)
-        query  = sql
+        query = sql
         values = tuple(od.values())
+
         self.__open()
         self.__session.execute(query, values)
         number_rows = self.__session.rowcount
@@ -172,4 +161,15 @@ class DBManager(object):
         self.__close()
         return result
     ## End def select_advanced
+
+    def fast_insert(self, table, keys, values):
+        query = "INSERT INTO %s " % table
+        query += "(" + ",".join(["`%s`"] * len(keys)) %  tuple (keys) + ") VALUES (" + ",".join(["%s"]*len(values)) + ")"
+
+        self.__open()
+        self.__session.executemany(query, values)
+        self.__connection.commit()
+        self.__close()
+        return self.__session.lastrowid
+
 ## End class

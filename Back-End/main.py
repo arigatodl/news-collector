@@ -1,8 +1,12 @@
-__author__ = 'Dulguun'
+#!/usr/bin/env python
+# coding=utf-8
+
 
 import ConfigParser
 
 from Database.DBManager import DBManager
+from Collector import Collector
+
 
 CONFIG_FILE_NAME = ".env"
 
@@ -16,4 +20,6 @@ _db_password = config.get("Database", "DB_PASSWORD")
 
 db_manager = DBManager(_db_host, _db_username, _db_password, _db_database)
 
-print db_manager.select()
+collector = Collector()
+collector.collect(db_manager)
+
