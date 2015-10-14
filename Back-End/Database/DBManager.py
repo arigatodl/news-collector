@@ -160,16 +160,30 @@ class DBManager(object):
 
         self.__close()
         return result
-    ## End def select_advanced
+    #End def select_advanced
 
     def fast_insert(self, table, keys, values):
+        result = None
+
         query = "INSERT INTO %s " % table
-        query += "(" + ",".join(["`%s`"] * len(keys)) %  tuple (keys) + ") VALUES (" + ",".join(["%s"]*len(values)) + ")"
+        query += "(" + ",".join(["`%s`"] * len(keys)) % tuple(keys) + ") VALUES (" + ",".join(["%s"]*len(values[0])) + ")"
 
-        self.__open()
-        self.__session.executemany(query, values)
-        self.__connection.commit()
-        self.__close()
-        return self.__session.lastrowid
+        try:
+            self.__open()
 
-## End class
+            try:
+                self.__session.executemany(query, values)
+                self.__connection.commit()
+            except MySQLdb.Error as e:
+                print e
+                self.__connection.rollback()
+
+            self.__close()
+            result = self.__session.lastrowid
+        except:
+            print 'Database connection error'
+            result = -1
+
+        return result
+
+#End class
