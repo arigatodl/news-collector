@@ -4,6 +4,6 @@ python:
 
 # command to install dependencies
 install:
-    - pip install slack
-    - pip install feedparser
-    - pip install mysql-python-connector
+    - pip3 install slack
+    - pip3 install feedparser
+    - pip3 install mysql-connector-python-rf
