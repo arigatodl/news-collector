@@ -7,3 +7,6 @@ install:
     - pip3 install slack
     - pip3 install feedparser
     - pip3 install mysql-connector-python-rf
+
+notifications:
+    email: false
