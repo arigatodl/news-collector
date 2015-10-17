@@ -8,7 +8,7 @@ from Database.DBManager import DBManager
 from Collector import Collector
 
 
-CONFIG_FILE_NAME = ".env"
+CONFIG_FILE_NAME = "settings.env"
 
 # Starting point
 

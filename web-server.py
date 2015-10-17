@@ -15,7 +15,7 @@ from Database.DBManager import DBManager
 app = Flask(__name__)
 app.debug = True
 
-CONFIG_FILE_NAME = ".env"
+CONFIG_FILE_NAME = "settings.env"
 
 # starting point
 
