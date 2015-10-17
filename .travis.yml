@@ -6,4 +6,4 @@ python:
 install:
     - pip install slack
     - pip install feedparser
-    - pip install mysql-python-connector-rf
+    - pip install mysql-python-connector
