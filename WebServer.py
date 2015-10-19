@@ -1,12 +1,9 @@
-import os
-if os.name == 'nt':
-    import win_unicode_console
-    win_unicode_console.enable()
+"""
+    Web server
+    Processes rest api requests and sends the response back
+"""
 
 import configparser
-import json
-from datetime import datetime
-from datetime import date
 from flask import Flask
 
 from Database.DBManager import DBManager
@@ -17,7 +14,9 @@ app.debug = True
 
 CONFIG_FILE_NAME = "settings.env"
 
-# starting point
+"""
+    STARTING POINT
+"""
 
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE_NAME)
@@ -25,7 +24,9 @@ config.read(CONFIG_FILE_NAME)
 config_raw = configparser.RawConfigParser()
 config_raw.read(CONFIG_FILE_NAME)
 
-# configuration
+"""
+    CONFIGURATION
+"""
 HOST_URL = config.get("Web Server", "HOST_URL")
 
 LIMIT_NUMBER = config.get("Web Server", "LIMIT_NUMBER")
@@ -37,15 +38,6 @@ DB_USERNAME = config.get("Database", "DB_USERNAME")
 DB_PASSWORD = config.get("Database", "DB_PASSWORD")
 
 db_manager = DBManager(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_DATABASE)
-
-class DatetimeEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            return obj.strftime(TIME_FORMAT)
-        elif isinstance(obj, date):
-            return obj.strftime('%Y-%m-%d')
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
 
 @app.route("/")
 def hello():
@@ -59,12 +51,10 @@ def get_news(news_id):
                 'ORDER BY content_time DESC ' \
                 'LIMIT ' + LIMIT_NUMBER
 
-    result = db_manager.select_json(sql_query,
-                                    ('idContent', news_id))
+    result = db_manager.select_raw_json(sql_query,
+                                        ('idContent', news_id))
 
-    print(result)
-
-    return json.dumps(result, cls=DatetimeEncoder)
+    return result
 # end get_news
 
 if __name__ == "__main__":

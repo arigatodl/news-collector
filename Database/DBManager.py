@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+
 import mysql.connector
+import json
 from datetime import datetime
 from collections import OrderedDict
+
 
 class DBManager(object):
     """
@@ -24,6 +27,10 @@ class DBManager(object):
         self.__database = database
     # end __init__
 
+    """
+        CONNECTION
+    """
+
     def __open(self):
         try:
             cnx = mysql.connector.connect(host=self.__host,
@@ -43,6 +50,10 @@ class DBManager(object):
         self.__connection.close()
     # end __close
 
+
+    """
+        SELECT queries
+    """
     def select(self, table, where=None, *args, **kwargs):
         result = None
         query = 'SELECT '
@@ -76,14 +87,13 @@ class DBManager(object):
         return result
     # end select
 
-    def select_json(self, sql, *args):
+    def select_advanced(self, sql, *args):
         od = OrderedDict(args)
         query = sql
         values = tuple(od.values())
 
         self.__open()
         self.__session.execute(query, values)
-
         number_rows = self.__session.rowcount
         number_columns = len(self.__session.description)
 
@@ -91,16 +101,42 @@ class DBManager(object):
             result = [item for item in self.__session.fetchall()]
         else:
             result = [item[0] for item in self.__session.fetchall()]
-        print(result)
-        return result
-
-        result = [dict(line) for line in [zip([column[0] for column in
-                     self.__session.description], row) for row in self.__session.fetchall()]]
 
         self.__close()
         return result
-    # end select_json
+    # end select_advanced
 
+    def select_raw_json(self, sql, *args):
+        od = OrderedDict(args)
+        query = sql
+        values = tuple(od.values())
+
+        self.__open()
+        self.__session.execute(query, values)
+
+        # JSON
+        _column_names = []
+        for row in self.__session.description:
+            _column_names.append(row[0])
+
+        json_data = []
+        for row in self.__session.fetchall():
+            _data = {}
+            for idx, column in enumerate(row):
+                if isinstance(column, datetime):
+                    _data[_column_names[idx]] = str(column)
+                else:
+                    _data[_column_names[idx]] = column
+            json_data.append(_data)
+
+        self.__close()
+        return json.dumps(json_data, ensure_ascii=False)
+    # end select_raw_json
+
+
+    """
+        UPDATE queries
+    """
     def update(self, table, where=None, *args, **kwargs):
         query = "UPDATE %s SET " % table
         keys = kwargs.keys()
@@ -123,8 +159,12 @@ class DBManager(object):
         self.__close()
 
         return update_rows
-    # end update
+    # end updateå
 
+
+    """
+        INSERT queries
+    """
     def insert(self, table, *args, **kwargs):
         values = None
         query = "INSERT INTO %s " % table
@@ -143,43 +183,6 @@ class DBManager(object):
         self.__close()
         return self.__session.lastrowid
     # end insert
-
-    def delete(self, table, where=None, *args):
-        query = "DELETE FROM %s" % table
-        if where:
-            query += ' WHERE %s' % where
-
-        values = tuple(args)
-
-        self.__open()
-        self.__session.execute(query, values)
-        self.__connection.commit()
-
-        # Obtain rows affected
-        delete_rows = self.__session.rowcount
-        self.__close()
-
-        return delete_rows
-    # end delete
-
-    def select_advanced(self, sql, *args):
-        od = OrderedDict(args)
-        query = sql
-        values = tuple(od.values())
-
-        self.__open()
-        self.__session.execute(query, values)
-        number_rows = self.__session.rowcount
-        number_columns = len(self.__session.description)
-
-        if number_rows >= 1 and number_columns > 1:
-            result = [item for item in self.__session.fetchall()]
-        else:
-            result = [item[0] for item in self.__session.fetchall()]
-
-        self.__close()
-        return result
-    # end select_advanced
 
     def insert_many(self, table, keys, values):
         result = None
@@ -206,5 +209,28 @@ class DBManager(object):
 
         return result
     # end insert_many
+
+
+    """
+        DELETE queries
+    """
+    def delete(self, table, where=None, *args):
+        query = "DELETE FROM %s" % table
+        if where:
+            query += ' WHERE %s' % where
+
+        values = tuple(args)
+
+        self.__open()
+        self.__session.execute(query, values)
+        self.__connection.commit()
+
+        # Obtain rows affected
+        delete_rows = self.__session.rowcount
+        self.__close()
+
+        return delete_rows
+    # end delete
+
 
 # end class
